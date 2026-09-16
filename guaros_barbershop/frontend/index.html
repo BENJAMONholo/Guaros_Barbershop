@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarberShop Pro - Agendamiento Exclusivo</title>
+    
+    <!-- Tailwind CSS y Phosphor Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Flatpickr (Calendario Premium) y su Tema Oscuro -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#090514', /* Morado noche profundo */
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #090514; /* Corrección: Color hexadecimal directo */
+            color: #e9d5ff; /* purple-200 */
+            overflow-x: hidden;
+        }
+
+        /* Luces de neón de fondo */
+        .ambient-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(140px);
+            z-index: -1;
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        /* Contenedor principal de cristal morado */
+        .glass-card-dark {
+            background: linear-gradient(135deg, rgba(30, 15, 60, 0.4) 0%, rgba(15, 7, 30, 0.8) 100%);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.5); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+        .selection-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .selection-card:hover { transform: translateY(-2px); }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        #toast {
+            transform: translateY(150%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #toast.show { transform: translateY(0); }
+
+        /* ================= HACK CUSTOM PARA EL CALENDARIO ================= */
+        .flatpickr-calendar {
+            background: #150a2e !important;
+            border: 1px solid rgba(139, 92, 246, 0.3) !important;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important;
+        }
+        .flatpickr-months .flatpickr-month, .flatpickr-current-month .flatpickr-monthDropdown-months {
+            background: transparent !important;
+            color: #d8b4fe !important;
+        }
+        .flatpickr-day { color: #e9d5ff !important; }
+        .flatpickr-day.selected, .flatpickr-day:focus {
+            background: #8b5cf6 !important;
+            border-color: #8b5cf6 !important;
+        }
+        .flatpickr-day.flatpickr-disabled { color: rgba(139, 92, 246, 0.2) !important; }
+        .flatpickr-input[readonly] { cursor: pointer; }
+    </style>
+</head>
+<!-- Corrección: Se añade bg-[#090514] al body para forzar el fondo oscuro -->
+<body class="bg-[#090514] min-h-screen flex flex-col selection:bg-purple-500 selection:text-white">
+
+    <!-- Luces Ambientales -->
+    <div class="ambient-glow bg-purple-600 top-[-10%] left-[-10%]"></div>
+    <div class="ambient-glow bg-indigo-700 bottom-[-10%] right-[-10%]"></div>
+
+    <!-- Notificación -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#1e1040] text-purple-100 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 font-medium text-sm border border-purple-500/30">
+        <i id="toast-icon" class="ph ph-check-circle text-xl text-emerald-400"></i>
+        <span id="toast-msg">Mensaje</span>
+    </div>
+
+    <!-- ================= HERO SECTION ================= -->
+    <div class="relative w-full h-[450px] sm:h-[500px] bg-[url('https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center">
+        <!-- Degradado que se funde exactamente con el color del fondo de la página -->
+        <div class="absolute inset-0 bg-gradient-to-b from-[#090514]/70 via-[#090514]/60 to-[#090514]"></div>
+        
+        <!-- Navbar -->
+        <header class="relative z-10 w-full px-6 py-5 flex justify-between items-center max-w-5xl mx-auto">
+            <div class="flex items-center gap-3">
+                <img src="assets/logo.png" alt="Guaro's Logo" class="w-12 h-12 object-contain" onerror="this.outerHTML=`<div class='w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/25'><i class='ph ph-scissors text-xl'></i></div>`">
+                <div>
+                    <span class="font-extrabold text-lg tracking-tight text-white">GUARO'S<span class="text-purple-500"> BARBERSHOP</span></span>
+                    <span class="block text-[10px] tracking-widest uppercase text-purple-300/60 font-semibold">Studio & Lounge</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Titulares -->
+        <div class="relative z-10 flex flex-col items-center justify-center h-full text-center px-4 -mt-16 sm:-mt-20">
+            <span class="px-4 py-1.5 rounded-full bg-purple-500/20 text-purple-200 text-xs font-bold tracking-widest uppercase mb-4 border border-purple-500/30 backdrop-blur-md">
+                Agenda Online 24/7
+            </span>
+            <h1 class="text-4xl sm:text-5xl font-black text-white tracking-tight mb-4 drop-shadow-xl">
+                La Excelencia en <br class="sm:hidden"><span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-indigo-400">Cada Detalle</span>
+            </h1>
+            <p class="text-purple-200/70 text-sm sm:text-base max-w-lg mx-auto drop-shadow-md">
+                Experimenta el verdadero servicio premium. Selecciona tu estilo, elige a tu barbero y asegura tu hora al instante.
+            </p>
+        </div>
+    </div>
+
+    <!-- ================= FORMULARIO PRINCIPAL ================= -->
+    <main id="client-view" class="flex-1 flex flex-col items-center p-4 w-full max-w-xl mx-auto -mt-24 sm:-mt-32 relative z-20 animate-fade-in mb-12">
+        
+        <div class="glass-card-dark w-full rounded-[2rem] p-6 sm:p-8 shadow-2xl relative">
+            
+            <!-- 1. Servicio -->
+            <div class="mb-8">
+                <label class="block text-xs font-bold uppercase tracking-widest text-purple-300/60 mb-4">1. Selecciona el Servicio</label>
+                <div class="max-h-[380px] overflow-y-auto pr-2 space-y-6 rounded-xl custom-scrollbar" style="scrollbar-width: thin; scrollbar-color: rgba(139,92,246,0.3) transparent;">
+                    
+                    <!-- Categoría: Servicios -->
+                    <div>
+                        <h4 class="text-[10px] font-bold text-purple-400/50 uppercase tracking-widest mb-3 ml-1">Servicios Base</h4>
+                        <div class="space-y-2">
+                            <div class="selection-card service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all" data-name="Corte de Cabello" data-category="base" onclick="selectBase('Corte de Cabello', 'normal')">
+                                <div>
+                                    <h3 class="font-bold text-sm text-purple-50">Corte de Cabello</h3>
+                                    <span class="text-[10px] text-purple-300/50">1 hora</span>
+                                </div>
+                                <span class="price-tag font-extrabold text-sm text-purple-300/50">$11.000</span>
+                            </div>
+                            <div class="selection-card service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all" data-name="Corte de Niño" data-category="base" onclick="selectBase('Corte de Niño', 'child')">
+                                <div>
+                                    <h3 class="font-bold text-sm text-purple-50">Corte de Niño</h3>
+                                    <span class="text-[10px] text-purple-300/50">1 hora</span>
+                                </div>
+                                <span class="price-tag font-extrabold text-sm text-purple-300/50">$11.000</span>
+                            </div>
+                            <div class="selection-card service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all" data-name="Corte a Navaja" data-category="base" onclick="selectBase('Corte a Navaja', 'normal')">
+                                <div>
+                                    <h3 class="font-bold text-sm text-purple-50">Corte a Navaja</h3>
+                                    <span class="text-[10px] text-purple-300/50">1 hora</span>
+                                </div>
+                                <span class="price-tag font-extrabold text-sm text-purple-300/50">$13.000</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categoría: Servicios Adicionales -->
+                    <div>
+                        <h4 class="text-[10px] font-bold text-purple-400/50 uppercase tracking-widest mb-3 ml-1">Servicios Adicionales</h4>
+                        <div class="space-y-2">
+                            <div class="selection-card service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all" data-name="Perfilado de Barba" data-category="addon" onclick="toggleAddon('Perfilado de Barba')">
+                                <div>
+                                    <h3 class="font-bold text-sm text-purple-50">Perfilado de Barba</h3>
+                                    <span class="text-[10px] text-purple-300/50">15 min</span>
+                                </div>
+                                <span class="price-tag font-extrabold text-sm text-purple-300/50">$7.000</span>
+                            </div>
+                            <div class="selection-card service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all" data-name="Perfilado de Cejas" data-category="addon" onclick="toggleAddon('Perfilado de Cejas')">
+                                <div>
+                                    <h3 class="font-bold text-sm text-purple-50">Perfilado de Cejas</h3>
+                                    <span class="text-[10px] text-purple-300/50">15 min</span>
+                                </div>
+                                <span class="price-tag font-extrabold text-sm text-purple-300/50">$4.000</span>
+                            </div>
+                            <div class="selection-card service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all" data-name="Línea en la ceja ó comillas" data-category="addon" onclick="toggleAddon('Línea en la ceja ó comillas')">
+                                <div>
+                                    <h3 class="font-bold text-sm text-purple-50">Línea en la ceja ó comillas</h3>
+                                    <span class="text-[10px] text-purple-300/50">15 min</span>
+                                </div>
+                                <span class="price-tag font-extrabold text-sm text-purple-300/50">$2.000</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categoría: Servicios Premium -->
+                    <div>
+                        <h4 class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-3 ml-1 flex items-center gap-1"><i class="ph ph-crown text-lg"></i> Paquetes Premium</h4>
+                        <div class="space-y-2">
+                            <div class="selection-card service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all" data-name="Corte + Perf. Barba + Cejas" data-category="premium" onclick="selectBase('Corte + Perf. Barba + Cejas', 'premium')">
+                                <div>
+                                    <h3 class="font-bold text-sm text-purple-50">Corte + Perf. Barba + Cejas</h3>
+                                    <span class="text-[10px] text-emerald-400/70">1 hora 30 min</span>
+                                </div>
+                                <span class="price-tag font-extrabold text-sm text-purple-300/50">$18.000</span>
+                            </div>
+                            <div class="selection-card service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all" data-name="Corte + Perf. Barba" data-category="premium" onclick="selectBase('Corte + Perf. Barba', 'premium')">
+                                <div>
+                                    <h3 class="font-bold text-sm text-purple-50">Corte + Perf. Barba</h3>
+                                    <span class="text-[10px] text-emerald-400/70">1 hora 15 min</span>
+                                </div>
+                                <span class="price-tag font-extrabold text-sm text-purple-300/50">$16.000</span>
+                            </div>
+                            <div class="selection-card service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all" data-name="Corte + Perf. Cejas" data-category="premium" onclick="selectBase('Corte + Perf. Cejas', 'premium')">
+                                <div>
+                                    <h3 class="font-bold text-sm text-purple-50">Corte + Perf. Cejas</h3>
+                                    <span class="text-[10px] text-purple-300/50">1 hora 10 min</span>
+                                </div>
+                                <span class="price-tag font-extrabold text-sm text-purple-300/50">$13.000</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 2. Barbero -->
+            <div class="mb-8">
+                <label class="block text-xs font-bold uppercase tracking-widest text-purple-300/60 mb-4">2. Elige tu Barbero</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="selection-card barber-card active cursor-pointer p-4 rounded-2xl border border-purple-500 bg-purple-500/20 flex flex-col items-center text-center gap-3" onclick="selectBarber(this, 'Alex')">
+                        <img src="https://placehold.co/80x80/6b4c9a/ffffff?text=Alex" class="w-14 h-14 rounded-full object-cover shadow-[0_0_15px_rgba(139,92,246,0.5)] border-2 border-purple-500" alt="Alex">
+                        <div>
+                            <h4 class="font-bold text-sm text-white">Alex Studio</h4>
+                        </div>
+                    </div>
+                    <div class="selection-card barber-card cursor-pointer p-4 rounded-2xl border border-purple-500/10 bg-purple-500/5 flex flex-col items-center text-center gap-3 transition-all hover:border-purple-500/30" onclick="selectBarber(this, 'David')">
+                        <img src="https://placehold.co/80x80/3b82f6/ffffff?text=David" class="w-14 h-14 rounded-full object-cover border-2 border-transparent" alt="David">
+                        <div>
+                            <h4 class="font-bold text-sm text-purple-200">David Fade</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Fecha y Hora -->
+            <div class="mb-8">
+                <label class="block text-xs font-bold uppercase tracking-widest text-purple-300/60 mb-4">3. Fecha y Bloque Horario</label>
+                <div class="relative mb-4">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-purple-400 z-10 pointer-events-none"><i class="ph ph-calendar"></i></span>
+                    <input type="text" id="book-date" placeholder="Selecciona una fecha..." class="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-purple-900/10 border border-purple-500/20 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 font-semibold text-purple-100 shadow-inner transition-all text-sm">
+                </div>
+                <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    <button class="time-btn py-2.5 rounded-xl border border-purple-500/20 bg-purple-500/5 text-purple-200/70 text-xs font-bold transition-all hover:border-purple-500 hover:text-purple-300" onclick="selectTime(this, '10:00')">10:00</button>
+                    <button class="time-btn py-2.5 rounded-xl border border-purple-500/20 bg-purple-500/5 text-purple-200/70 text-xs font-bold transition-all hover:border-purple-500 hover:text-purple-300" onclick="selectTime(this, '11:00')">11:00</button>
+                    <button class="time-btn py-2.5 rounded-xl border border-purple-500/20 bg-purple-500/5 text-purple-200/70 text-xs font-bold transition-all hover:border-purple-500 hover:text-purple-300" onclick="selectTime(this, '12:00')">12:00</button>
+                    <button class="time-btn py-2.5 rounded-xl border border-purple-500/20 bg-purple-500/5 text-purple-200/70 text-xs font-bold transition-all hover:border-purple-500 hover:text-purple-300" onclick="selectTime(this, '13:00')">13:00</button>
+                    <button class="time-btn py-2.5 rounded-xl border border-purple-500/20 bg-purple-500/5 text-purple-200/70 text-xs font-bold transition-all hover:border-purple-500 hover:text-purple-300" onclick="selectTime(this, '14:00')">14:00</button>
+                    <button class="time-btn py-2.5 rounded-xl border border-purple-500/20 bg-purple-500/5 text-purple-200/70 text-xs font-bold transition-all hover:border-purple-500 hover:text-purple-300" onclick="selectTime(this, '15:00')">15:00</button>
+                    <button class="time-btn py-2.5 rounded-xl border border-purple-500/20 bg-purple-500/5 text-purple-200/70 text-xs font-bold transition-all hover:border-purple-500 hover:text-purple-300" onclick="selectTime(this, '16:00')">16:00</button>
+                    <button class="time-btn py-2.5 rounded-xl border border-purple-500/20 bg-purple-500/5 text-purple-200/70 text-xs font-bold transition-all hover:border-purple-500 hover:text-purple-300" onclick="selectTime(this, '17:00')">17:00</button>
+                    <button class="time-btn py-2.5 rounded-xl border border-purple-500/20 bg-purple-500/5 text-purple-200/70 text-xs font-bold transition-all hover:border-purple-500 hover:text-purple-300" onclick="selectTime(this, '18:00')">18:00</button>
+                    <button class="time-btn py-2.5 rounded-xl border border-purple-500/20 bg-purple-500/5 text-purple-200/70 text-xs font-bold transition-all hover:border-purple-500 hover:text-purple-300" onclick="selectTime(this, '19:00')">19:00</button>
+                    <button class="time-btn py-2.5 rounded-xl border border-purple-500/20 bg-purple-500/5 text-purple-200/70 text-xs font-bold transition-all hover:border-purple-500 hover:text-purple-300" onclick="selectTime(this, '20:00')">20:00</button>
+                </div>
+            </div>
+
+            <!-- 4. Datos -->
+            <div class="mb-8 space-y-4">
+                <label class="block text-xs font-bold uppercase tracking-widest text-purple-300/60 mb-2">4. Tus Datos de Contacto</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-purple-400"><i class="ph ph-user-circle"></i></span>
+                    <input type="text" id="client-name" placeholder="Tu Nombre" class="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-purple-900/10 border border-purple-500/20 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 font-medium text-purple-100 placeholder-purple-300/40 shadow-inner transition-all text-sm">
+                </div>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-emerald-400"><i class="ph ph-whatsapp-logo"></i></span>
+                    <input type="tel" id="client-phone" placeholder="WhatsApp (+569...)" class="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-purple-900/10 border border-purple-500/20 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 font-medium text-purple-100 placeholder-purple-300/40 shadow-inner transition-all text-sm">
+                </div>
+            </div>
+
+            <button onclick="confirmBooking()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-extrabold text-sm hover:opacity-95 active:scale-[0.98] transition-all shadow-[0_0_25px_rgba(139,92,246,0.4)] flex items-center justify-center gap-2 tracking-wide uppercase border border-purple-400/50">
+                <i class="ph ph-calendar-check text-xl"></i> Confirmar y Agendar
+            </button>
+        </div>
+
+        <div class="mt-8 text-center">
+            <button onclick="showLogin()" class="opacity-40 hover:opacity-100 transition-opacity text-xs inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-200">
+                <i class="ph ph-lock-key"></i> Acceso Barberos
+            </button>
+        </div>
+    </main>
+
+    <!-- ================= LOGIN MODAL ================= -->
+    <div id="login-modal" class="fixed inset-0 bg-[#090514]/90 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 animate-fade-in">
+        <div class="glass-card-dark p-8 rounded-3xl w-full max-w-sm relative border border-purple-500/30 text-white shadow-2xl">
+            <button onclick="hideLogin()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center opacity-70 hover:opacity-100 text-purple-200"><i class="ph ph-x"></i></button>
+            <div class="w-12 h-12 rounded-2xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-2xl mb-4"><i class="ph ph-shield-check"></i></div>
+            <h2 class="text-2xl font-bold mb-1 text-purple-50">Panel de Barberos</h2>
+            <p class="text-xs text-purple-300/60 mb-6">Ingresa tu PIN (Demo: 1234)</p>
+            <input type="password" id="pin-input" placeholder="••••" maxlength="4" class="w-full p-4 rounded-2xl bg-purple-900/20 border border-purple-500/30 focus:outline-none focus:border-purple-500 text-center text-3xl tracking-[0.7em] font-mono mb-6 text-purple-100 shadow-inner">
+            <button onclick="attemptLogin()" class="w-full py-3.5 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-bold transition-all shadow-[0_0_20px_rgba(139,92,246,0.4)]">Iniciar Sesión</button>
+        </div>
+    </div>
+
+    <!-- ================= PANEL BARBEROS ================= -->
+    <div id="barber-view" class="hidden fixed inset-0 z-50 bg-[#090514] text-purple-100 flex flex-col md:flex-row overflow-hidden animate-fade-in">
+        
+        <!-- Sidebar -->
+        <div class="w-full md:w-20 bg-[#120a26] border-b md:border-b-0 md:border-r border-purple-500/10 flex md:flex-col items-center justify-between py-4 md:py-8 px-6 md:px-0">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.6)]">
+                <i class="ph ph-scissors text-2xl text-white"></i>
+            </div>
+            <div class="md:mt-auto">
+                <button onclick="logout()" class="p-3 rounded-2xl hover:bg-red-500/10 text-red-400/80 hover:text-red-400 transition-colors border border-transparent hover:border-red-500/30" title="Cerrar Sesión">
+                    <i class="ph ph-sign-out text-2xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 flex flex-col p-6 md:p-10 overflow-y-auto bg-gradient-to-br from-[#090514] via-[#0d071c] to-[#160b2e]">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight text-white">Dashboard General ⚡</h1>
+                    <p class="text-purple-300/60 text-sm mt-1">Vista sincronizada de todas las agendas.</p>
+                </div>
+                <div class="bg-purple-900/10 px-5 py-3 rounded-2xl flex items-center gap-4 border border-purple-500/20">
+                    <button onclick="renderTimeline()" class="px-4 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/40 text-purple-200 text-xs font-bold transition-all border border-purple-500/30 flex items-center gap-1.5 shadow-[0_0_10px_rgba(139,92,246,0.2)]">
+                        <i class="ph ph-arrows-clockwise"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Calendario Deslizable -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-xs font-bold text-purple-400/60 uppercase tracking-widest">Seleccionar Fecha</h3>
+                </div>
+                <div class="flex gap-3 overflow-x-auto pb-4 hide-scrollbar" id="calendar-slider"></div>
+            </div>
+
+            <!-- Grilla Principal -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1">
+                
+                <!-- Columna Izquierda: Widgets -->
+                <div class="space-y-6 lg:col-span-1">
+                    <div class="glass-card-dark rounded-3xl p-6">
+                        <h3 class="text-purple-400/60 text-xs uppercase tracking-widest font-bold mb-4">Resumen Día</h3>
+                        <div class="flex items-end gap-3 mb-2">
+                            <span id="contador-citas" class="text-5xl font-black text-purple-50">-</span>
+                            <span class="text-purple-300/60 text-sm mb-1">Citas en total</span>
+                        </div>
+                    </div>
+                    <div class="glass-card-dark rounded-3xl p-6 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl border border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                                <i class="ph ph-whatsapp-logo"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-sm text-purple-50">WhatsApp API</h4>
+                                <p class="text-xs text-emerald-400 flex items-center gap-1 font-medium">Conectado</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columnas de Barberos -->
+                <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Columna ALEX -->
+                    <div class="glass-card-dark rounded-3xl p-6 flex flex-col">
+                        <div class="flex items-center gap-3 mb-6 border-b border-purple-500/10 pb-4">
+                            <img src="https://placehold.co/80x80/6b4c9a/ffffff?text=Alex" class="w-10 h-10 rounded-full object-cover shadow-[0_0_15px_rgba(139,92,246,0.4)] border border-purple-500/50">
+                            <h3 class="text-xl font-bold text-purple-100">Agenda <span class="text-purple-400">Alex</span></h3>
+                        </div>
+                        <div class="flex-1 overflow-y-auto pr-2 space-y-4 hide-scrollbar" id="timeline-alex"></div>
+                    </div>
+                    <!-- Columna DAVID -->
+                    <div class="glass-card-dark rounded-3xl p-6 flex flex-col">
+                        <div class="flex items-center gap-3 mb-6 border-b border-purple-500/10 pb-4">
+                            <img src="https://placehold.co/80x80/3b82f6/ffffff?text=David" class="w-10 h-10 rounded-full object-cover border border-purple-500/20">
+                            <h3 class="text-xl font-bold text-purple-100">Agenda <span class="text-blue-400">David</span></h3>
+                        </div>
+                        <div class="flex-1 overflow-y-auto pr-2 space-y-4 hide-scrollbar" id="timeline-david"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= SCRIPT LOGIC ================= -->
+    <script>
+        const API_URL = 'http://127.0.0.1:5000/api';
+        
+        let selectedBaseService = { name: "Corte de Cabello", type: "normal" };
+        let selectedAddons = [];
+        let finalServiceName = "Corte de Cabello";
+        
+        let selectedBarberName = "Alex";
+        let selectedTimeSlot = "";
+
+        const dateInput = document.getElementById('book-date');
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function selectBase(name, type) {
+            selectedBaseService = { name, type };
+            if (type !== 'normal') {
+                selectedAddons = [];
+            }
+            updateServicesUI();
+        }
+
+        function toggleAddon(name) {
+            if (selectedBaseService.type !== 'normal') {
+                showToast("Selecciona 'Corte de Cabello' o 'Navaja' para agregar adicionales.", "error");
+                return;
+            }
+            
+            const index = selectedAddons.indexOf(name);
+            if (index > -1) {
+                selectedAddons.splice(index, 1);
+            } else {
+                selectedAddons.push(name);
+            }
+            updateServicesUI();
+        }
+
+        function updateServicesUI() {
+            document.querySelectorAll('.service-card').forEach(card => {
+                const name = card.dataset.name;
+                const category = card.dataset.category;
+                
+                // Limpieza total de clases
+                card.classList.remove('border-purple-500', 'bg-purple-500/20', 'border-emerald-500', 'bg-emerald-500/10', 'border-purple-500/10', 'bg-purple-500/5', 'opacity-50');
+                const priceTag = card.querySelector('.price-tag');
+                if(priceTag) priceTag.classList.remove('text-purple-400', 'text-emerald-400', 'text-purple-300/50');
+
+                let isSelected = false;
+                if (category === 'base' || category === 'premium') {
+                    isSelected = (selectedBaseService.name === name);
+                } else if (category === 'addon') {
+                    isSelected = selectedAddons.includes(name);
+                }
+
+                if (isSelected) {
+                    if (category === 'premium') {
+                        card.classList.add('border-emerald-500', 'bg-emerald-500/10');
+                        if(priceTag) priceTag.classList.add('text-emerald-400');
+                    } else {
+                        card.classList.add('border-purple-500', 'bg-purple-500/20');
+                        if(priceTag) priceTag.classList.add('text-purple-400');
+                    }
+                } else {
+                    // Estado apagado (Totalmente inmersivo en morado)
+                    card.classList.add('border-purple-500/10', 'bg-purple-500/5');
+                    if(priceTag) priceTag.classList.add('text-purple-300/50');
+                    
+                    if (category === 'addon' && selectedBaseService.type !== 'normal') {
+                        card.classList.add('opacity-50');
+                    }
+                }
+            });
+
+            finalServiceName = selectedBaseService.name;
+            if (selectedAddons.length > 0) {
+                const addonNames = selectedAddons.map(a => {
+                    if(a === 'Perfilado de Barba') return 'Barba';
+                    if(a === 'Perfilado de Cejas') return 'Cejas';
+                    if(a === 'Línea en la ceja ó comillas') return 'Línea';
+                    return a;
+                }).join(' + ');
+                finalServiceName += ` + ${addonNames}`;
+            }
+        }
+
+        function selectBarber(element, name) {
+            document.querySelectorAll('.barber-card').forEach(card => {
+                card.classList.remove('border-purple-500', 'bg-purple-500/20');
+                card.classList.add('border-purple-500/10', 'bg-purple-500/5');
+            });
+            element.classList.add('border-purple-500', 'bg-purple-500/20');
+            element.classList.remove('border-purple-500/10', 'bg-purple-500/5');
+            selectedBarberName = name;
+            cargarHorasDisponibles();
+        }
+
+        function selectTime(element, time) {
+            if(element.disabled) return;
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.classList.remove('border-purple-500', 'bg-purple-500', 'text-white', 'shadow-[0_0_15px_rgba(139,92,246,0.4)]');
+                if(!btn.disabled) {
+                    btn.classList.add('border-purple-500/20', 'text-purple-200/70', 'bg-purple-500/5');
+                    btn.classList.remove('text-white');
+                }
+            });
+            element.classList.add('border-purple-500', 'bg-purple-500', 'text-white', 'shadow-[0_0_15px_rgba(139,92,246,0.4)]');
+            element.classList.remove('border-purple-500/20', 'text-purple-200/70', 'bg-purple-500/5');
+            selectedTimeSlot = time;
+        }
+
+        async function cargarHorasDisponibles() {
+            const fecha = dateInput.value;
+            if(!fecha) return;
+
+            const [year, month, day] = fecha.split('-');
+            const dateObj = new Date(year, month - 1, day);
+            const esDomingo = dateObj.getDay() === 0;
+
+            try {
+                const res = await fetch(`${API_URL}/disponibilidad?fecha=${fecha}&barbero=${selectedBarberName}`);
+                const data = await res.json();
+                const horasOcupadas = data.ocupadas || [];
+                
+                const horasTarde = ['16:00', '17:00', '18:00', '19:00', '20:00'];
+
+                document.querySelectorAll('.time-btn').forEach(btn => {
+                    const horaStr = btn.innerText;
+                    
+                    // Reset
+                    btn.classList.remove('border-purple-500', 'bg-purple-500', 'text-white', 'shadow-[0_0_15px_rgba(139,92,246,0.4)]', 'opacity-20', 'cursor-not-allowed', 'bg-purple-900/5', 'hidden');
+                    btn.classList.add('border-purple-500/20', 'text-purple-200/70', 'bg-purple-500/5');
+                    btn.disabled = false;
+
+                    if (esDomingo && horasTarde.includes(horaStr)) {
+                        btn.classList.add('hidden');
+                        return; 
+                    }
+
+                    if(horasOcupadas.includes(horaStr)) {
+                        btn.disabled = true;
+                        btn.classList.remove('border-purple-500/20', 'text-purple-200/70', 'bg-purple-500/5');
+                        btn.classList.add('opacity-20', 'cursor-not-allowed', 'bg-purple-900/5', 'text-purple-400');
+                    }
+                });
+                selectedTimeSlot = "";
+            } catch (error) {
+                console.error("Error al cargar disponibilidad", error);
+            }
+        }
+
+        async function confirmBooking() {
+            const name = document.getElementById('client-name').value;
+            const phone = document.getElementById('client-phone').value;
+            const fecha = dateInput.value;
+
+            if(!name || !phone || !selectedTimeSlot) { 
+                showToast("Completa tus datos y selecciona una hora", "error"); 
+                return; 
+            }
+
+            const payload = {
+                cliente: name,
+                telefono: phone,
+                servicio: finalServiceName, 
+                barbero: selectedBarberName,
+                fecha: fecha,
+                hora: selectedTimeSlot
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/agendar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if(res.ok) {
+                    showToast(`¡Cita con ${selectedBarberName} confirmada!`);
+                    document.getElementById('client-name').value = '';
+                    document.getElementById('client-phone').value = '';
+                    cargarHorasDisponibles(); 
+                } else {
+                    showToast("La hora ya no está disponible", "error");
+                    cargarHorasDisponibles();
+                }
+            } catch (error) {
+                showToast("Error de conexión con el servidor", "error");
+            }
+        }
+
+        function showLogin() { document.getElementById('login-modal').classList.remove('hidden'); }
+        function hideLogin() { document.getElementById('login-modal').classList.add('hidden'); }
+        function attemptLogin() {
+            if(document.getElementById('pin-input').value === '1234') {
+                hideLogin();
+                document.getElementById('barber-view').classList.remove('hidden');
+                generarCalendario();
+                seleccionarDiaBarbero(document.querySelector('.dia-calendario'), new Date().toISOString().split('T')[0]);
+            } else { showToast("PIN incorrecto", "error"); }
+        }
+        function logout() { document.getElementById('barber-view').classList.add('hidden'); }
+
+        function generarCalendario() {
+            const slider = document.getElementById('calendar-slider');
+            const fechaActual = new Date();
+            const dias = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
+            let html = '';
+            
+            for(let i = 0; i <= 14; i++) {
+                const fecha = new Date(fechaActual);
+                fecha.setDate(fechaActual.getDate() + i);
+                
+                const esHoy = i === 0;
+                const nombreDia = dias[fecha.getDay()];
+                const numeroDia = fecha.getDate();
+                const fechaDB = fecha.toISOString().split('T')[0];
+                
+                let activeClass = esHoy ? 'bg-purple-600 border-purple-500 shadow-[0_0_15px_rgba(139,92,246,0.4)] text-white active-day' : 'bg-purple-500/5 border-purple-500/10 hover:bg-purple-500/10 text-purple-300/60';
+                let textClass = esHoy ? 'text-white' : 'text-purple-200';
+                
+                html += `
+                    <div onclick="seleccionarDiaBarbero(this, '${fechaDB}')" class="dia-calendario flex flex-col items-center justify-center p-3 rounded-2xl border cursor-pointer min-w-[75px] transition-all ${activeClass}">
+                        <span class="text-[10px] font-bold mb-1 uppercase">${nombreDia}</span>
+                        <span class="text-xl font-black ${textClass}">${numeroDia}</span>
+                        ${esHoy ? '<span class="w-1 h-1 bg-white rounded-full mt-1"></span>' : ''}
+                    </div>
+                `;
+            }
+            slider.innerHTML = html;
+        }
+
+        async function seleccionarDiaBarbero(elemento, fechaDB) {
+            document.querySelectorAll('.dia-calendario').forEach(el => {
+                el.classList.remove('bg-purple-600', 'border-purple-500', 'shadow-[0_0_15px_rgba(139,92,246,0.4)]', 'text-white', 'active-day');
+                el.classList.add('bg-purple-500/5', 'border-purple-500/10', 'text-purple-300/60');
+                el.querySelector('span:nth-child(2)').classList.remove('text-white');
+                el.querySelector('span:nth-child(2)').classList.add('text-purple-200');
+            });
+            
+            elemento.classList.remove('bg-purple-500/5', 'border-purple-500/10', 'text-purple-300/60');
+            elemento.classList.add('bg-purple-600', 'border-purple-500', 'shadow-[0_0_15px_rgba(139,92,246,0.4)]', 'text-white', 'active-day');
+            elemento.querySelector('span:nth-child(2)').classList.remove('text-purple-200');
+            elemento.querySelector('span:nth-child(2)').classList.add('text-white');
+            
+            document.getElementById('barber-view').dataset.fechaActiva = fechaDB;
+            renderTimeline(fechaDB);
+        }
+
+        async function renderTimeline(fecha = null) {
+            const fechaDB = fecha || document.getElementById('barber-view').dataset.fechaActiva || new Date().toISOString().split('T')[0];
+            const containerAlex = document.getElementById('timeline-alex');
+            const containerDavid = document.getElementById('timeline-david');
+            const contadorCitas = document.getElementById('contador-citas');
+            
+            containerAlex.innerHTML = '<p class="text-purple-300/50 text-sm animate-pulse">Cargando...</p>';
+            containerDavid.innerHTML = '<p class="text-purple-300/50 text-sm animate-pulse">Cargando...</p>';
+            contadorCitas.innerText = '-';
+
+            try {
+                const res = await fetch(`${API_URL}/citas?fecha=${fechaDB}`);
+                const citas = await res.json();
+
+                containerAlex.innerHTML = ''; 
+                containerDavid.innerHTML = '';
+                contadorCitas.innerText = citas.length;
+
+                if(citas.length === 0) {
+                    containerAlex.innerHTML = '<p class="text-purple-300/40 text-xs text-center mt-4">Sin citas para este día.</p>';
+                    containerDavid.innerHTML = '<p class="text-purple-300/40 text-xs text-center mt-4">Sin citas para este día.</p>';
+                    return;
+                }
+
+                citas.forEach(item => {
+                    const cardHTML = `
+                        <div class="flex items-center gap-4 p-4 rounded-2xl bg-purple-500/5 border border-purple-500/10 transition-all hover:bg-purple-500/10 hover:border-purple-500/20">
+                            <div class="w-14 font-mono text-xs text-purple-400 border-r border-purple-500/10 pr-3 text-center">
+                                <span class="block font-bold text-white text-sm">${item.hora}</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-sm text-purple-100 truncate mb-0.5">${item.cliente}</h4>
+                                <p class="text-xs text-purple-300/60 flex items-center gap-1"><i class="ph ph-whatsapp-logo"></i> ${item.telefono}</p>
+                                <p class="text-[10px] text-purple-400/50 truncate mt-1.5 border-t border-purple-500/10 pt-1.5"><i class="ph ph-scissors"></i> ${item.servicio}</p>
+                            </div>
+                        </div>
+                    `;
+                    if (item.barbero === 'Alex') containerAlex.innerHTML += cardHTML;
+                    else containerDavid.innerHTML += cardHTML;
+                });
+            } catch(error) {
+                containerAlex.innerHTML = '<p class="text-red-400 text-xs">Error de conexión.</p>';
+                containerDavid.innerHTML = '<p class="text-red-400 text-xs">Error de conexión.</p>';
+                contadorCitas.innerText = '0';
+            }
+        }
+
+        // Inicialización al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            flatpickr("#book-date", {
+                locale: "es", 
+                defaultDate: "today", 
+                minDate: "today", 
+                dateFormat: "Y-m-d", 
+                altInput: true, 
+                altFormat: "j \\de F, Y", 
+                disableMobile: true, 
+                onChange: function(selectedDates, dateStr, instance) {
+                    cargarHorasDisponibles(); 
+                }
+            });
+
+            updateServicesUI(); 
+            cargarHorasDisponibles();
+        });
+    </script>
+</body>
+</html>
