@@ -1,17 +1,19 @@
-from flask import Flask, request, jsonify
+import os
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import sqlite3
 from datetime import datetime
 
-app = Flask(__name__)
-CORS(app) # Permite que el HTML conecte con este servidor
+# 1. Le decimos a Flask dónde está la carpeta del diseño visual (frontend)
+frontend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
+app = Flask(__name__, static_folder=frontend_dir, static_url_path='')
+CORS(app) 
 
 DB_NAME = "citas.db"
 
 def init_db():
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    # Crear tabla si no existe
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS reservas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,7 +29,6 @@ def init_db():
     conn.close()
 
 def limpiar_historial():
-    """Elimina automáticamente las citas de días anteriores a hoy"""
     hoy = datetime.now().strftime('%Y-%m-%d')
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
@@ -35,13 +36,17 @@ def limpiar_historial():
     conn.commit()
     conn.close()
 
+# 2. NUEVA RUTA: Cuando alguien entre al link principal, le mostramos el index.html
+@app.route('/')
+def serve_index():
+    return send_from_directory(app.static_folder, 'index.html')
+
 @app.route('/api/agendar', methods=['POST'])
 def agendar():
     datos = request.json
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
     
-    # Verificar que la hora no se haya tomado en el último segundo
     cursor.execute("SELECT id FROM reservas WHERE fecha = ? AND hora = ? AND barbero = ?", 
                   (datos['fecha'], datos['hora'], datos['barbero']))
     if cursor.fetchone():
@@ -55,8 +60,6 @@ def agendar():
     conn.commit()
     conn.close()
     
-    # Aquí iría tu: whatsapp.enviar_notificacion(...)
-    
     return jsonify({"mensaje": "Cita agendada con éxito"}), 200
 
 @app.route('/api/disponibilidad', methods=['GET'])
@@ -66,7 +69,6 @@ def disponibilidad():
     
     conn = sqlite3.connect(DB_NAME)
     cursor = conn.cursor()
-    # Traer solo las horas que ya están ocupadas
     cursor.execute("SELECT hora FROM reservas WHERE fecha = ? AND barbero = ?", (fecha, barbero))
     ocupadas = [fila[0] for fila in cursor.fetchall()]
     conn.close()
@@ -75,7 +77,7 @@ def disponibilidad():
 
 @app.route('/api/citas', methods=['GET'])
 def obtener_citas():
-    limpiar_historial() # Borra lo viejo antes de mostrar
+    limpiar_historial()
     fecha = request.args.get('fecha')
     
     conn = sqlite3.connect(DB_NAME)
