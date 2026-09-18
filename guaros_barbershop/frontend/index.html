@@ -18,51 +18,96 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; overflow-x: hidden; background-color: #000; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+            background-color: #000;
+        }
+
+        /* Custom Scrollbar Global */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
+
         .selection-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .selection-card:hover { transform: translateY(-2px); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         .animate-fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        #toast { transform: translateY(150%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        .animate-fade-out { opacity: 0; visibility: hidden; transition: opacity 0.5s, visibility 0.5s; }
+
+        #toast {
+            transform: translateY(150%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
         #toast.show { transform: translateY(0); }
 
-        /* TEMAS */
+        /* ================= ESTILOS DINÁMICOS POR TEMA ================= */
+        
+        /* TEMA: BARBER (Morado) */
         body.theme-barber { background-color: #090514; color: #e9d5ff; }
-        body.theme-barber .glass-card-dark { background: linear-gradient(135deg, rgba(30, 15, 60, 0.4) 0%, rgba(15, 7, 30, 0.8) 100%); backdrop-filter: blur(25px); border: 1px solid rgba(139, 92, 246, 0.15); box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255,255,255,0.05); }
+        body.theme-barber .glass-card-dark {
+            background: linear-gradient(135deg, rgba(30, 15, 60, 0.4) 0%, rgba(15, 7, 30, 0.8) 100%);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
         body.theme-barber .flatpickr-calendar { background: #150a2e !important; border: 1px solid rgba(139, 92, 246, 0.3) !important; box-shadow: 0 20px 40px rgba(0,0,0,0.8) !important; }
         body.theme-barber .flatpickr-months .flatpickr-month { color: #d8b4fe !important; }
         body.theme-barber .flatpickr-day { color: #e9d5ff !important; }
         body.theme-barber .flatpickr-day.selected { background: #8b5cf6 !important; border-color: #8b5cf6 !important; }
         body.theme-barber .flatpickr-day.flatpickr-disabled { color: rgba(139, 92, 246, 0.2) !important; }
 
+        /* TEMA: STUDIO (Rosa/Negro) */
         body.theme-studio { background-color: #0a0508; color: #ffe4e6; }
-        body.theme-studio .glass-card-dark { background: linear-gradient(135deg, rgba(30, 10, 20, 0.6) 0%, rgba(15, 5, 10, 0.9) 100%); backdrop-filter: blur(25px); border: 1px solid rgba(244, 63, 94, 0.15); box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255,255,255,0.05); }
+        body.theme-studio .glass-card-dark {
+            background: linear-gradient(135deg, rgba(30, 10, 20, 0.6) 0%, rgba(15, 5, 10, 0.9) 100%);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(244, 63, 94, 0.15);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
         body.theme-studio .flatpickr-calendar { background: #14050a !important; border: 1px solid rgba(244, 63, 94, 0.3) !important; box-shadow: 0 20px 40px rgba(0,0,0,0.9) !important; }
         body.theme-studio .flatpickr-months .flatpickr-month { color: #fda4af !important; }
         body.theme-studio .flatpickr-day { color: #ffe4e6 !important; }
         body.theme-studio .flatpickr-day.selected { background: #f43f5e !important; border-color: #f43f5e !important; }
         body.theme-studio .flatpickr-day.flatpickr-disabled { color: rgba(244, 63, 94, 0.2) !important; }
 
+        /* ================= EFECTOS DE LA LANDING PAGE ================= */
         .split-overlay { transition: opacity 0.5s ease; }
-        @media (min-width: 768px) { .split-overlay { background-color: rgba(0,0,0,0.7); } .split-hover:hover .split-overlay { opacity: 0; } .split-hover:hover { flex-grow: 1.2; } }
-        @media (max-width: 767px) { .split-overlay { opacity: 0.25; background-color: rgba(0,0,0,1); } }
-        .ambient-glow { position: fixed; width: 600px; height: 600px; border-radius: 50%; filter: blur(140px); z-index: -1; opacity: 0.15; pointer-events: none; }
+        
+        @media (min-width: 768px) {
+            .split-overlay { background-color: rgba(0,0,0,0.7); }
+            .split-hover:hover .split-overlay { opacity: 0; }
+            .split-hover:hover { flex-grow: 1.2; }
+        }
+        @media (max-width: 767px) {
+            .split-overlay { opacity: 0.25; background-color: rgba(0,0,0,1); }
+        }
+
+        .ambient-glow {
+            position: fixed; width: 600px; height: 600px; border-radius: 50%;
+            filter: blur(140px); z-index: -1; opacity: 0.15; pointer-events: none;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col text-white">
 
-    <!-- Toast Global -->
+    <!-- Toast Global de Notificaciones -->
     <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[150] bg-[#111] text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 font-medium text-sm border border-white/20">
         <i id="toast-icon" class="ph-fill ph-check-circle text-xl text-emerald-400"></i>
         <span id="toast-msg">Mensaje</span>
     </div>
 
-    <!-- ================= LANDING SPLASH ================= -->
-    <div id="landing-splash" class="fixed inset-0 z-[100] flex flex-col md:flex-row bg-black transition-all duration-700">
+    <!-- =========================================================================
+         LANDING SPLASH (PANTALLA DIVIDIDA)
+         ========================================================================= -->
+    <div id="landing-splash" class="fixed inset-0 z-[100] flex flex-col md:flex-row bg-black transition-all duration-700" style="display: flex;">
+        
+        <!-- Lado Izquierdo: Guaro's Barber -->
         <div class="split-hover relative flex-1 h-1/2 md:h-full cursor-pointer transition-all duration-500 overflow-hidden border-b md:border-b-0 md:border-r border-white/10" onclick="enterApp('barber')">
             <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1585747860715-2ba37e788b70?q=80&w=2074&auto=format&fit=crop')] bg-cover bg-center"></div>
             <div class="split-overlay absolute inset-0"></div>
@@ -74,6 +119,7 @@
             </div>
         </div>
 
+        <!-- Lado Derecho: Guara's Studio -->
         <div class="split-hover relative flex-1 h-1/2 md:h-full cursor-pointer transition-all duration-500 overflow-hidden" onclick="enterApp('studio')">
             <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1604654894610-df63bc536371?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center"></div>
             <div class="split-overlay absolute inset-0"></div>
@@ -89,14 +135,17 @@
             </div>
         </div>
         
+        <!-- Etiqueta Flotante Central -->
         <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-full border border-white/10 shadow-2xl font-bold tracking-widest text-xs uppercase flex items-center gap-2 pointer-events-none">
             ¿Qué servicio <span class="text-white">escogerás</span> hoy?
         </div>
     </div>
 
 
-    <!-- ================= MÓDULO: GUARO'S BARBER ================= -->
-    <div id="app-barber" class="hidden flex-col min-h-screen">
+    <!-- =========================================================================
+         MÓDULO: GUARO'S BARBER (TEMA MORADO)
+         ========================================================================= -->
+    <div id="app-barber" class="flex-col min-h-screen" style="display: none;">
         <div class="ambient-glow bg-purple-600 top-[-10%] left-[-10%]"></div>
         <div class="ambient-glow bg-indigo-700 bottom-[-10%] right-[-10%]"></div>
 
@@ -317,7 +366,6 @@
             </div>
         </main>
 
-        <!-- ADMIN STUDIO -->
         <div id="studio-admin-view" class="hidden fixed inset-0 z-50 bg-[#0a0508] text-rose-100 flex-col md:flex-row overflow-hidden animate-fade-in">
             <div class="w-full md:w-20 bg-[#0f070c] border-b md:border-b-0 md:border-r border-rose-500/10 flex md:flex-col items-center justify-between py-4 md:py-8 px-6 md:px-0">
                 <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-600 to-pink-500 flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.6)] border border-white/20">
@@ -377,38 +425,38 @@
         const barberServicesHTML = `
             <div>
                 <h4 class="text-[10px] font-bold text-purple-400/50 uppercase tracking-widest mb-3 ml-1">Servicios Base</h4>
-                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all" data-name="Corte de Cabello" data-category="base" onclick="b_selectBase('Corte de Cabello', 'normal')">
-                    <div><h3 class="font-bold text-sm text-purple-50">Corte de Cabello</h3><span class="text-[10px] text-purple-300/50">1 hora</span></div><span class="price-tag font-extrabold text-sm text-purple-300/50">$11.000</span>
+                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2" data-name="Corte de Cabello" data-category="base" onclick="b_selectBase('Corte de Cabello', 'normal')">
+                    <div><h3 class="font-bold text-sm text-purple-50">Corte de Cabello</h3><span class="text-[10px] text-purple-300/50">1 hora</span></div><span class="price-tag font-extrabold text-sm">$11.000</span>
                 </div>
-                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all mt-2" data-name="Corte de Niño" data-category="base" onclick="b_selectBase('Corte de Niño', 'child')">
-                    <div><h3 class="font-bold text-sm text-purple-50">Corte de Niño</h3><span class="text-[10px] text-purple-300/50">1 hora</span></div><span class="price-tag font-extrabold text-sm text-purple-300/50">$11.000</span>
+                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2" data-name="Corte de Niño" data-category="base" onclick="b_selectBase('Corte de Niño', 'child')">
+                    <div><h3 class="font-bold text-sm text-purple-50">Corte de Niño</h3><span class="text-[10px] text-purple-300/50">1 hora</span></div><span class="price-tag font-extrabold text-sm">$11.000</span>
                 </div>
-                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all mt-2" data-name="Corte a Navaja" data-category="base" onclick="b_selectBase('Corte a Navaja', 'normal')">
-                    <div><h3 class="font-bold text-sm text-purple-50">Corte a Navaja</h3><span class="text-[10px] text-purple-300/50">1 hora</span></div><span class="price-tag font-extrabold text-sm text-purple-300/50">$13.000</span>
+                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2" data-name="Corte a Navaja" data-category="base" onclick="b_selectBase('Corte a Navaja', 'normal')">
+                    <div><h3 class="font-bold text-sm text-purple-50">Corte a Navaja</h3><span class="text-[10px] text-purple-300/50">1 hora</span></div><span class="price-tag font-extrabold text-sm">$13.000</span>
                 </div>
             </div>
             <div>
                 <h4 class="text-[10px] font-bold text-purple-400/50 uppercase tracking-widest mb-3 ml-1 mt-6">Servicios Adicionales</h4>
-                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all" data-name="Perfilado de Barba" data-category="addon" onclick="b_toggleAddon('Perfilado de Barba')">
-                    <div><h3 class="font-bold text-sm text-purple-50">Perfilado de Barba</h3><span class="text-[10px] text-purple-300/50">15 min</span></div><span class="price-tag font-extrabold text-sm text-purple-300/50">$7.000</span>
+                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2" data-name="Perfilado de Barba" data-category="addon" onclick="b_toggleAddon('Perfilado de Barba')">
+                    <div><h3 class="font-bold text-sm text-purple-50">Perfilado de Barba</h3><span class="text-[10px] text-purple-300/50">15 min</span></div><span class="price-tag font-extrabold text-sm">$7.000</span>
                 </div>
-                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all mt-2" data-name="Perfilado de Cejas" data-category="addon" onclick="b_toggleAddon('Perfilado de Cejas')">
-                    <div><h3 class="font-bold text-sm text-purple-50">Perfilado de Cejas</h3><span class="text-[10px] text-purple-300/50">15 min</span></div><span class="price-tag font-extrabold text-sm text-purple-300/50">$4.000</span>
+                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2" data-name="Perfilado de Cejas" data-category="addon" onclick="b_toggleAddon('Perfilado de Cejas')">
+                    <div><h3 class="font-bold text-sm text-purple-50">Perfilado de Cejas</h3><span class="text-[10px] text-purple-300/50">15 min</span></div><span class="price-tag font-extrabold text-sm">$4.000</span>
                 </div>
-                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all mt-2" data-name="Línea en la ceja ó comillas" data-category="addon" onclick="b_toggleAddon('Línea en la ceja ó comillas')">
-                    <div><h3 class="font-bold text-sm text-purple-50">Línea en la ceja ó comillas</h3><span class="text-[10px] text-purple-300/50">15 min</span></div><span class="price-tag font-extrabold text-sm text-purple-300/50">$2.000</span>
+                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2" data-name="Línea en la ceja ó comillas" data-category="addon" onclick="b_toggleAddon('Línea en la ceja ó comillas')">
+                    <div><h3 class="font-bold text-sm text-purple-50">Línea en la ceja ó comillas</h3><span class="text-[10px] text-purple-300/50">15 min</span></div><span class="price-tag font-extrabold text-sm">$2.000</span>
                 </div>
             </div>
             <div>
                 <h4 class="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-3 ml-1 mt-6 flex items-center gap-1"><i class="ph ph-crown text-lg"></i> Promociones</h4>
-                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all" data-name="Corte + Perfilado de Cejas" data-category="premium" onclick="b_selectBase('Corte + Perfilado de Cejas', 'premium')">
-                    <div><h3 class="font-bold text-sm text-purple-50">Corte + Perfilado de Cejas</h3><span class="text-[10px] text-emerald-400/70">1h 15m</span></div><span class="price-tag font-extrabold text-sm text-purple-300/50">$13.000</span>
+                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2" data-name="Corte + Perfilado de Cejas" data-category="premium" onclick="b_selectBase('Corte + Perfilado de Cejas', 'premium')">
+                    <div><h3 class="font-bold text-sm text-purple-50">Corte + Perfilado de Cejas</h3><span class="text-[10px] text-emerald-400/70">1h 15m</span></div><span class="price-tag font-extrabold text-sm">$13.000</span>
                 </div>
-                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all mt-2" data-name="Corte + Perfilado de Barba" data-category="premium" onclick="b_selectBase('Corte + Perfilado de Barba', 'premium')">
-                    <div><h3 class="font-bold text-sm text-purple-50">Corte + Perfilado de Barba</h3><span class="text-[10px] text-emerald-400/70">1h 15m</span></div><span class="price-tag font-extrabold text-sm text-purple-300/50">$16.000</span>
+                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2" data-name="Corte + Perfilado de Barba" data-category="premium" onclick="b_selectBase('Corte + Perfilado de Barba', 'premium')">
+                    <div><h3 class="font-bold text-sm text-purple-50">Corte + Perfilado de Barba</h3><span class="text-[10px] text-emerald-400/70">1h 15m</span></div><span class="price-tag font-extrabold text-sm">$16.000</span>
                 </div>
-                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border border-purple-500/10 bg-purple-500/5 transition-all mt-2" data-name="Corte + Perf.de Barba + Perf. de cejas" data-category="premium" onclick="b_selectBase('Corte + Perf.de Barba + Perf. de cejas', 'premium')">
-                    <div><h3 class="font-bold text-sm text-purple-50">Corte + Barba + Cejas</h3><span class="text-[10px] text-emerald-400/70">1h 30m</span></div><span class="price-tag font-extrabold text-sm text-purple-300/50">$18.000</span>
+                <div class="selection-card b-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2" data-name="Corte + Perf.de Barba + Perf. de cejas" data-category="premium" onclick="b_selectBase('Corte + Perf.de Barba + Perf. de cejas', 'premium')">
+                    <div><h3 class="font-bold text-sm text-purple-50">Corte + Barba + Cejas</h3><span class="text-[10px] text-emerald-400/70">1h 30m</span></div><span class="price-tag font-extrabold text-sm">$18.000</span>
                 </div>
             </div>
         `;
@@ -416,23 +464,23 @@
         const studioServicesHTML = `
             <div>
                 <h4 class="text-[10px] font-bold text-rose-400/60 uppercase tracking-widest mb-3 ml-1">Servicios Base</h4>
-                <div class="selection-card s-service-card cursor-pointer p-4 rounded-xl border border-rose-500/10 bg-rose-500/5 transition-all" data-name="Manicure Permanente" data-category="base" onclick="s_selectBase('Manicure Permanente', 'normal')">
-                    <div><h3 class="font-bold text-sm text-rose-50">Manicure Permanente</h3><span class="text-[10px] text-rose-300/60">1 hora</span></div><span class="price-tag font-extrabold text-sm text-rose-300/60">$15.000</span>
+                <div class="selection-card s-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2" data-name="Manicure Permanente" data-category="base" onclick="s_selectBase('Manicure Permanente', 'normal')">
+                    <div><h3 class="font-bold text-sm text-rose-50">Manicure Permanente</h3><span class="text-[10px] text-rose-300/60">1 hora</span></div><span class="price-tag font-extrabold text-sm">$15.000</span>
                 </div>
-                <div class="selection-card s-service-card cursor-pointer p-4 rounded-xl border border-rose-500/10 bg-rose-500/5 transition-all mt-2" data-name="Pedicure SPA" data-category="base" onclick="s_selectBase('Pedicure SPA', 'normal')">
-                    <div><h3 class="font-bold text-sm text-rose-50">Pedicure SPA</h3><span class="text-[10px] text-rose-300/60">1 hora</span></div><span class="price-tag font-extrabold text-sm text-rose-300/60">$18.000</span>
+                <div class="selection-card s-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2" data-name="Pedicure SPA" data-category="base" onclick="s_selectBase('Pedicure SPA', 'normal')">
+                    <div><h3 class="font-bold text-sm text-rose-50">Pedicure SPA</h3><span class="text-[10px] text-rose-300/60">1 hora</span></div><span class="price-tag font-extrabold text-sm">$18.000</span>
                 </div>
             </div>
             <div>
                 <h4 class="text-[10px] font-bold text-rose-400/60 uppercase tracking-widest mb-3 ml-1 mt-6">Diseño & Adicionales</h4>
-                <div class="selection-card s-service-card cursor-pointer p-4 rounded-xl border border-rose-500/10 bg-rose-500/5 transition-all" data-name="Diseño Nail Art" data-category="addon" onclick="s_toggleAddon('Diseño Nail Art')">
-                    <div><h3 class="font-bold text-sm text-rose-50">Diseño Nail Art</h3><span class="text-[10px] text-rose-300/60">15 min</span></div><span class="price-tag font-extrabold text-sm text-rose-300/60">$3.000</span>
+                <div class="selection-card s-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2" data-name="Diseño Nail Art" data-category="addon" onclick="s_toggleAddon('Diseño Nail Art')">
+                    <div><h3 class="font-bold text-sm text-rose-50">Diseño Nail Art</h3><span class="text-[10px] text-rose-300/60">15 min</span></div><span class="price-tag font-extrabold text-sm">$3.000</span>
                 </div>
             </div>
             <div>
                 <h4 class="text-[10px] font-bold text-amber-400 uppercase tracking-widest mb-3 ml-1 mt-6 flex items-center gap-1"><i class="ph-fill ph-crown text-lg"></i> Combos Premium</h4>
-                <div class="selection-card s-service-card cursor-pointer p-4 rounded-xl border border-rose-500/10 bg-rose-500/5 transition-all" data-name="Mani + Pedi Permanente" data-category="premium" onclick="s_selectBase('Mani + Pedi Permanente', 'premium')">
-                    <div><h3 class="font-bold text-sm text-rose-50">Mani + Pedi Permanente</h3><span class="text-[10px] text-amber-400/80">2 horas</span></div><span class="price-tag font-extrabold text-sm text-rose-300/60">$30.000</span>
+                <div class="selection-card s-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2" data-name="Mani + Pedi Permanente" data-category="premium" onclick="s_selectBase('Mani + Pedi Permanente', 'premium')">
+                    <div><h3 class="font-bold text-sm text-rose-50">Mani + Pedi Permanente</h3><span class="text-[10px] text-amber-400/80">2 horas</span></div><span class="price-tag font-extrabold text-sm">$30.000</span>
                 </div>
             </div>
         `;
@@ -488,7 +536,6 @@
         }
 
         // ================= POLLING DE HORAS =================
-        // Actualiza el calendario en vivo cada 10 segundos para prevenir reservas dobles
         setInterval(() => {
             if(activeApp === 'barber' && b_state.barber) b_cargarHoras();
             if(activeApp === 'studio' && s_state.barber) s_cargarHoras();
@@ -526,18 +573,27 @@
         function b_updateUI() {
             document.querySelectorAll('.b-service-card').forEach(card => {
                 const name = card.dataset.name, cat = card.dataset.category;
-                card.className = "selection-card b-service-card cursor-pointer p-4 rounded-xl border transition-all border-purple-500/10 bg-purple-500/5";
-                if(card.parentElement.children[0] !== card) card.classList.add('mt-2'); // espaciado
+                card.className = "selection-card b-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2";
                 
-                const pTag = card.querySelector('.price-tag'); pTag.className = "price-tag font-extrabold text-sm text-purple-300/50";
+                const pTag = card.querySelector('.price-tag'); 
+                pTag.className = "price-tag font-extrabold text-sm";
                 
                 let sel = (cat==='base'||cat==='premium') ? (b_state.base.name === name) : b_state.addons.includes(name);
                 
                 if(sel) {
-                    if(cat==='premium') { card.classList.add('border-emerald-500', 'bg-emerald-500/10'); pTag.classList.add('text-emerald-400'); }
-                    else { card.classList.add('border-purple-500', 'bg-purple-500/20'); pTag.classList.add('text-purple-400'); }
-                } else if(cat==='addon' && b_state.base.type !== 'normal') {
-                    card.classList.add('opacity-50');
+                    if(cat==='premium') { 
+                        card.classList.add('border-emerald-500', 'bg-emerald-500/10'); 
+                        pTag.classList.add('text-emerald-400');
+                    } else { 
+                        card.classList.add('border-purple-500', 'bg-purple-500/20'); 
+                        pTag.classList.add('text-purple-400');
+                    }
+                } else {
+                    card.classList.add('border-purple-500/10', 'bg-purple-500/5');
+                    pTag.classList.add('text-purple-300/50');
+                    if(cat==='addon' && b_state.base.type !== 'normal') {
+                        card.classList.add('opacity-50');
+                    }
                 }
             });
             b_state.finalName = b_state.base.name + (b_state.addons.length ? " + " + b_state.addons.map(a=>a.split(' ')[0]).join('+') : "");
@@ -571,7 +627,6 @@
                 const data = await res.json();
                 document.querySelectorAll('.b-time-btn').forEach(b => {
                     const t = b.innerText; 
-                    // No sobreescribir la clase si el botón ya fue seleccionado activamente por el usuario
                     const isSelected = b_state.time === t;
                     b.disabled = false; b.classList.remove('hidden');
                     
@@ -579,14 +634,12 @@
                         b.className = "b-time-btn py-2.5 rounded-xl border border-purple-500/20 bg-purple-500/5 text-purple-200/70 text-xs font-bold hover:border-purple-500 hover:text-purple-300";
                     }
 
-                    // Limite del domingo
                     if(isSunday && ['16:00','17:00','18:00','19:00','20:00'].includes(t)) { b.classList.add('hidden'); return; }
                     
-                    // Si ya está ocupado en la BD
                     if((data.ocupadas||[]).includes(t)) { 
                         b.disabled=true; 
                         b.className="b-time-btn py-2.5 rounded-xl border border-purple-500/20 bg-purple-900/5 text-purple-400 opacity-20 cursor-not-allowed text-xs font-bold"; 
-                        if(isSelected) b_state.time = ""; // Deseleccionar si se ocupó mientras lo miraba
+                        if(isSelected) b_state.time = ""; 
                     }
                 });
             } catch(e) {}
@@ -605,7 +658,7 @@
                 } else {
                     const err = await res.json();
                     showToast(err.error || "Alguien más tomó la hora", "error");
-                    b_cargarHoras(); // Refrescar botones
+                    b_cargarHoras(); 
                 }
             } catch(e) { showToast("Error de conexión", "error"); }
         }
@@ -633,16 +686,26 @@
         function s_updateUI() {
             document.querySelectorAll('.s-service-card').forEach(card => {
                 const name = card.dataset.name, cat = card.dataset.category;
-                card.className = "selection-card s-service-card cursor-pointer p-4 rounded-xl border transition-all border-rose-500/10 bg-rose-500/5";
-                if(card.parentElement.children[0] !== card) card.classList.add('mt-2');
+                card.className = "selection-card s-service-card cursor-pointer p-4 rounded-xl border transition-all mt-2";
 
-                const pTag = card.querySelector('.price-tag'); pTag.className = "price-tag font-extrabold text-sm text-rose-300/60";
+                const pTag = card.querySelector('.price-tag'); 
+                pTag.className = "price-tag font-extrabold text-sm";
                 
                 let sel = (cat==='base'||cat==='premium') ? (s_state.base.name === name) : s_state.addons.includes(name);
+                
                 if(sel) {
-                    if(cat==='premium') { card.classList.add('border-amber-400', 'bg-amber-400/10'); pTag.classList.add('text-amber-400'); }
-                    else { card.classList.add('border-rose-500', 'bg-rose-500/20'); pTag.classList.add('text-rose-400'); }
-                } else if(cat==='addon' && s_state.base.type !== 'normal') card.classList.add('opacity-50');
+                    if(cat==='premium') { 
+                        card.classList.add('border-amber-400', 'bg-amber-400/10'); 
+                        pTag.classList.add('text-amber-400'); 
+                    } else { 
+                        card.classList.add('border-rose-500', 'bg-rose-500/20'); 
+                        pTag.classList.add('text-rose-400'); 
+                    }
+                } else {
+                    card.classList.add('border-rose-500/10', 'bg-rose-500/5');
+                    pTag.classList.add('text-rose-300/60');
+                    if(cat==='addon' && s_state.base.type !== 'normal') card.classList.add('opacity-50');
+                }
             });
             s_state.finalName = s_state.base.name + (s_state.addons.length ? " + " + s_state.addons.map(a=>a.split(' ')[0]).join('+') : "");
         }
@@ -807,7 +870,11 @@
                 document.getElementById('b-timeline-alex').innerHTML = ''; document.getElementById('b-timeline-david').innerHTML = '';
                 citas.forEach(i => {
                     const c = `<div class="flex items-center gap-4 p-4 rounded-2xl bg-purple-500/5 border border-purple-500/10"><div class="w-14 font-mono text-xs text-purple-400 border-r border-purple-500/10 pr-3 text-center"><span class="block font-bold text-white text-sm">${i.hora}</span></div><div class="flex-1 min-w-0"><h4 class="font-bold text-sm text-purple-100 truncate mb-0.5">${i.cliente}</h4><p class="text-[10px] text-purple-400/50 mt-1">${i.servicio}</p></div></div>`;
-                    if(i.barbero === 'Alex') document.getElementById('b-timeline-alex').innerHTML += c; else document.getElementById('b-timeline-david').innerHTML += c;
+                    if(i.barbero === 'Alex') {
+                        document.getElementById('b-timeline-alex').innerHTML += c; 
+                    } else if (i.barbero === 'David') {
+                        document.getElementById('b-timeline-david').innerHTML += c;
+                    }
                 });
             } catch(e) {}
         }
@@ -821,7 +888,11 @@
                 document.getElementById('s-timeline-camila').innerHTML = ''; document.getElementById('s-timeline-valentina').innerHTML = '';
                 citas.forEach(i => {
                     const c = `<div class="flex items-center gap-4 p-4 rounded-2xl bg-rose-500/5 border border-rose-500/10"><div class="w-14 font-mono text-xs text-amber-400 border-r border-rose-500/10 pr-3 text-center"><span class="block font-bold text-white text-sm">${i.hora}</span></div><div class="flex-1 min-w-0"><h4 class="font-bold text-sm text-rose-100 truncate mb-0.5">${i.cliente}</h4><p class="text-[10px] text-rose-400/60 mt-1">${i.servicio}</p></div></div>`;
-                    if(i.barbero === 'Camila') document.getElementById('s-timeline-camila').innerHTML += c; else document.getElementById('s-timeline-valentina').innerHTML += c;
+                    if(i.barbero === 'Camila') {
+                        document.getElementById('s-timeline-camila').innerHTML += c;
+                    } else if (i.barbero === 'Valentina') {
+                        document.getElementById('s-timeline-valentina').innerHTML += c;
+                    }
                 });
             } catch(e) {}
         }
