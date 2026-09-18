@@ -238,7 +238,7 @@
         </main>
         
         <!-- ADMIN BARBER -->
-        <div id="barber-admin-view" class="hidden fixed inset-0 z-50 bg-[#090514] text-purple-100 flex-col md:flex-row overflow-hidden animate-fade-in">
+        <div id="barber-admin-view" class="fixed inset-0 z-50 bg-[#090514] text-purple-100 flex-col md:flex-row overflow-hidden animate-fade-in" style="display: none;">
             <div class="w-full md:w-20 bg-[#120a26] border-b md:border-b-0 md:border-r border-purple-500/10 flex md:flex-col items-center justify-between py-4 md:py-8 px-6 md:px-0">
                 <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.6)]">
                     <i class="ph ph-scissors text-2xl text-white"></i>
@@ -279,7 +279,7 @@
 
 
     <!-- ================= MÓDULO: GUARA'S STUDIO ================= -->
-    <div id="app-studio" class="hidden flex-col min-h-screen">
+    <div id="app-studio" class="flex-col min-h-screen" style="display: none;">
         <div class="ambient-glow bg-rose-600 top-[-10%] left-[-10%]"></div>
         <div class="ambient-glow bg-amber-600 bottom-[-10%] right-[-10%]"></div>
 
@@ -366,7 +366,7 @@
             </div>
         </main>
 
-        <div id="studio-admin-view" class="hidden fixed inset-0 z-50 bg-[#0a0508] text-rose-100 flex-col md:flex-row overflow-hidden animate-fade-in">
+        <div id="studio-admin-view" class="fixed inset-0 z-50 bg-[#0a0508] text-rose-100 flex-col md:flex-row overflow-hidden animate-fade-in" style="display: none;">
             <div class="w-full md:w-20 bg-[#0f070c] border-b md:border-b-0 md:border-r border-rose-500/10 flex md:flex-col items-center justify-between py-4 md:py-8 px-6 md:px-0">
                 <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-600 to-pink-500 flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.6)] border border-white/20">
                     <i class="ph ph-sparkle text-2xl text-white"></i>
@@ -386,7 +386,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
                     <div class="glass-card-dark rounded-3xl p-6 flex flex-col">
                         <div class="flex items-center gap-3 mb-6 border-b border-rose-500/10 pb-4">
-                            <img src="https://images.unsplash.com/photo-1595152772835-219674b2a8a6?q=80&w=150&auto=format&fit=crop" class="w-10 h-10 rounded-full object-cover shadow-[0_0_15px_rgba(244,63,94,0.4)] border border-rose-500/50">
+                            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=764&auto=format&fit=crop" class="w-10 h-10 rounded-full object-cover shadow-[0_0_15px_rgba(244,63,94,0.4)] border border-rose-500/50">
                             <h3 class="text-xl font-bold text-rose-100">Agenda <span class="text-rose-400">Camila</span></h3>
                         </div>
                         <div class="flex-1 overflow-y-auto pr-2 space-y-4 hide-scrollbar" id="s-timeline-camila"></div>
@@ -499,40 +499,40 @@
         // ================= ROUTING (NAVEGACIÓN) =================
         function enterApp(appName) {
             activeApp = appName;
-            document.getElementById('landing-splash').classList.add('hidden');
+            const splash = document.getElementById('landing-splash');
+            splash.classList.add('animate-fade-out');
             
-            if (appName === 'barber') {
-                document.body.className = "bg-[#090514] min-h-screen flex flex-col selection:bg-purple-500 selection:text-white theme-barber";
-                document.getElementById('app-barber').classList.remove('hidden');
-                document.getElementById('app-barber').classList.add('flex');
-                initBarber();
-            } else {
-                document.body.className = "bg-[#0a0508] min-h-screen flex flex-col selection:bg-rose-500 selection:text-white theme-studio";
-                document.getElementById('app-studio').classList.remove('hidden');
-                document.getElementById('app-studio').classList.add('flex');
-                initStudio();
-            }
+            setTimeout(() => {
+                splash.style.display = 'none';
+                if (appName === 'barber') {
+                    document.body.className = "bg-[#090514] min-h-screen flex flex-col selection:bg-purple-500 selection:text-white theme-barber";
+                    document.getElementById('app-barber').style.display = 'flex';
+                    initBarber();
+                } else {
+                    document.body.className = "bg-[#0a0508] min-h-screen flex flex-col selection:bg-rose-500 selection:text-white theme-studio";
+                    document.getElementById('app-studio').style.display = 'flex';
+                    initStudio();
+                }
+            }, 500);
         }
 
         function returnToLanding() {
             activeApp = null;
             document.body.className = "bg-[#000] min-h-screen flex flex-col text-white";
             
-            // Forzar cierre de todas las vistas con clases Tailwind
+            // Ocultar de manera absoluta por ID
             ['app-barber', 'app-studio', 'barber-admin-view', 'studio-admin-view'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
-                document.getElementById(id).classList.remove('flex');
+                document.getElementById(id).style.display = 'none';
             });
             
             // Reiniciar vistas de clientes
-            document.getElementById('barber-client-view').classList.remove('hidden');
-            document.getElementById('barber-client-view').classList.add('flex');
-            document.getElementById('studio-client-view').classList.remove('hidden');
-            document.getElementById('studio-client-view').classList.add('flex');
+            document.getElementById('barber-client-view').style.display = 'flex';
+            document.getElementById('studio-client-view').style.display = 'flex';
             
             // Encender portal principal
-            document.getElementById('landing-splash').classList.remove('hidden');
-            document.getElementById('landing-splash').classList.add('flex');
+            const landing = document.getElementById('landing-splash');
+            landing.classList.remove('animate-fade-out');
+            landing.style.display = 'flex';
         }
 
         // ================= POLLING DE HORAS =================
@@ -798,16 +798,12 @@
             if(document.getElementById('pin-input').value === '1234') {
                 hideAdminModal();
                 if(pendingLogin === 'barber') {
-                    document.getElementById('barber-client-view').classList.add('hidden');
-                    document.getElementById('barber-client-view').classList.remove('flex');
-                    document.getElementById('barber-admin-view').classList.remove('hidden');
-                    document.getElementById('barber-admin-view').classList.add('flex');
+                    document.getElementById('barber-client-view').style.display = 'none';
+                    document.getElementById('barber-admin-view').style.display = 'flex';
                     genCal('barber');
                 } else {
-                    document.getElementById('studio-client-view').classList.add('hidden');
-                    document.getElementById('studio-client-view').classList.remove('flex');
-                    document.getElementById('studio-admin-view').classList.remove('hidden');
-                    document.getElementById('studio-admin-view').classList.add('flex');
+                    document.getElementById('studio-client-view').style.display = 'none';
+                    document.getElementById('studio-admin-view').style.display = 'flex';
                     genCal('studio');
                 }
             } else showToast("PIN incorrecto", "error");
@@ -815,15 +811,11 @@
 
         function logoutAdmin(app) {
             if(app === 'barber') {
-                document.getElementById('barber-admin-view').classList.add('hidden');
-                document.getElementById('barber-admin-view').classList.remove('flex');
-                document.getElementById('barber-client-view').classList.remove('hidden');
-                document.getElementById('barber-client-view').classList.add('flex');
+                document.getElementById('barber-admin-view').style.display = 'none';
+                document.getElementById('barber-client-view').style.display = 'flex';
             } else {
-                document.getElementById('studio-admin-view').classList.add('hidden');
-                document.getElementById('studio-admin-view').classList.remove('flex');
-                document.getElementById('studio-client-view').classList.remove('hidden');
-                document.getElementById('studio-client-view').classList.add('flex');
+                document.getElementById('studio-admin-view').style.display = 'none';
+                document.getElementById('studio-client-view').style.display = 'flex';
             }
         }
 
@@ -870,6 +862,7 @@
                 document.getElementById('b-timeline-alex').innerHTML = ''; document.getElementById('b-timeline-david').innerHTML = '';
                 citas.forEach(i => {
                     const c = `<div class="flex items-center gap-4 p-4 rounded-2xl bg-purple-500/5 border border-purple-500/10"><div class="w-14 font-mono text-xs text-purple-400 border-r border-purple-500/10 pr-3 text-center"><span class="block font-bold text-white text-sm">${i.hora}</span></div><div class="flex-1 min-w-0"><h4 class="font-bold text-sm text-purple-100 truncate mb-0.5">${i.cliente}</h4><p class="text-[10px] text-purple-400/50 mt-1">${i.servicio}</p></div></div>`;
+                    // Filtro corregido por barbero
                     if(i.barbero === 'Alex') {
                         document.getElementById('b-timeline-alex').innerHTML += c; 
                     } else if (i.barbero === 'David') {
@@ -888,6 +881,7 @@
                 document.getElementById('s-timeline-camila').innerHTML = ''; document.getElementById('s-timeline-valentina').innerHTML = '';
                 citas.forEach(i => {
                     const c = `<div class="flex items-center gap-4 p-4 rounded-2xl bg-rose-500/5 border border-rose-500/10"><div class="w-14 font-mono text-xs text-amber-400 border-r border-rose-500/10 pr-3 text-center"><span class="block font-bold text-white text-sm">${i.hora}</span></div><div class="flex-1 min-w-0"><h4 class="font-bold text-sm text-rose-100 truncate mb-0.5">${i.cliente}</h4><p class="text-[10px] text-rose-400/60 mt-1">${i.servicio}</p></div></div>`;
+                    // Filtro corregido por especialista
                     if(i.barbero === 'Camila') {
                         document.getElementById('s-timeline-camila').innerHTML += c;
                     } else if (i.barbero === 'Valentina') {
